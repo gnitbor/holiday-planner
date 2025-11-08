@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 Victorian Family Planner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .instructions {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 14px;
+            padding: 10px;
+            background: #edf2f7;
+            border-radius: 8px;
+        }
+        
+        .instructions strong {
+            color: #2d3748;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 1400px) {
+            .calendar-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 1000px) {
+            .calendar-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .calendar-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+        }
+        
+        .month {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .month-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        
+        .day-header {
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: #718096;
+            padding: 4px;
+        }
+        
+        .day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            border: 2px solid transparent;
+            user-select: none;
+            min-height: 32px;
+            min-width: 32px;
+        }
+        
+        @media (max-width: 600px) {
+            .day {
+                font-size: 11px;
+                min-height: 40px;
+                min-width: 40px;
+            }
+        }
+        
+        .day:hover:not(.empty):not(.public-holiday) {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        @media (hover: none) {
+            .day:hover:not(.empty):not(.public-holiday) {
+                transform: none;
+            }
+            
+            .day:active:not(.empty) {
+                transform: scale(0.95);
+            }
+        }
+        
+        .day.empty {
+            cursor: default;
+        }
+        
+        .day.weekend {
+            background: #edf2f7;
+        }
+        
+        .day.public-holiday {
+            background: #fed7d7;
+            color: #c53030;
+            font-weight: bold;
+        }
+        
+        .day.public-holiday.selecting-start {
+            border: 3px solid #38a169 !important;
+            box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.3);
+        }
+        
+        .day.public-holiday.selecting-preview {
+            border: 3px dashed #38a169 !important;
+        }
+        
+        .day.school-term {
+            background: #bee3f8;
+        }
+        
+        .day.school-holiday {
+            background: #fefcbf;
+        }
+        
+        .day.family-holiday {
+            background: #9ae6b4;
+            font-weight: bold;
+            border: 2px solid #38a169;
+        }
+        
+        .day.family-holiday.public-holiday {
+            background: #9ae6b4;
+            color: #c53030;
+            font-weight: bold;
+            border: 2px solid #38a169;
+        }
+        
+        .day.selecting-start {
+            background: #68d391 !important;
+            border: 2px solid #2f855a !important;
+            box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.3);
+        }
+        
+        .day.selecting-preview {
+            background: #c6f6d5 !important;
+            border: 2px dashed #38a169 !important;
+        }
+        
+        .day.today {
+            box-shadow: inset 0 0 0 2px #667eea;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            min-height: 44px;
+            touch-action: manipulation;
+        }
+        
+        @media (max-width: 600px) {
+            button {
+                padding: 14px 20px;
+                font-size: 15px;
+                min-height: 48px;
+            }
+        }
+        
+        button:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button.secondary {
+            background: #718096;
+        }
+        
+        button.secondary:hover {
+            background: #4a5568;
+        }
+        
+        button.cancel {
+            background: #e53e3e;
+        }
+        
+        button.cancel:hover {
+            background: #c53030;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #2d3748;
+        }
+        
+        .modal-content label {
+            display: block;
+            margin: 15px 0 5px;
+            font-weight: bold;
+            color: #4a5568;
+        }
+        
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 16px;
+            touch-action: manipulation;
+        }
+        
+        @media (max-width: 600px) {
+            .modal-content input {
+                font-size: 16px;
+                padding: 14px;
+            }
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .modal-buttons button {
+            flex: 1;
+        }
+        
+        .tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2d3748;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            margin-bottom: 5px;
+            z-index: 10;
+        }
+        
+        .day:hover .tooltip {
+            opacity: 1;
+        }
+        
+        .holiday-list {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 12px;
+        }
+        
+        .holiday-list h3 {
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+        
+        .holiday-item {
+            background: white;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #38a169;
+        }
+        
+        .holiday-info {
+            flex: 1;
+        }
+        
+        .holiday-name {
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        .holiday-dates {
+            font-size: 13px;
+            color: #718096;
+            margin-top: 4px;
+        }
+        
+        .holiday-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .holiday-actions button {
+            padding: 8px 16px;
+            font-size: 13px;
+            min-height: 40px;
+        }
+        
+        @media (max-width: 600px) {
+            .holiday-actions button {
+                padding: 10px 18px;
+                font-size: 14px;
+                min-height: 44px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>2026 Victorian Family Planner</h1>
+        <div class="instructions">
+            <strong>How to add holidays:</strong> Click a start date, then click an end date (like booking flights!) • 
+            <strong>To edit:</strong> Click any green holiday day • 
+            <span id="selectionStatus"></span>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #fed7d7;"></div>
+                <span>Public Holiday</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #bee3f8;"></div>
+                <span>School Term</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #fefcbf;"></div>
+                <span>School Holiday</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #9ae6b4; border: 2px solid #38a169;"></div>
+                <span>Family Holiday</span>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button onclick="toggleHolidayList()" class="secondary">View All Holidays</button>
+            <button onclick="clearFamilyHolidays()" class="secondary">Clear All</button>
+            <button id="cancelBtn" onclick="cancelSelection()" class="cancel" style="display: none;">Cancel Selection</button>
+        </div>
+        
+        <div class="holiday-list" id="holidayList" style="display: none;">
+            <h3>Your Family Holidays</h3>
+            <div id="holidayItems"></div>
+        </div>
+        
+        <div class="calendar-grid" id="calendar"></div>
+    </div>
+    
+    <div class="modal" id="holidayModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Add Family Holiday</h2>
+            <input type="hidden" id="editingIndex">
+            <label>Holiday Name:</label>
+            <input type="text" id="holidayLabel" placeholder="e.g., Beach Trip">
+            <label>Start Date:</label>
+            <input type="text" id="startDateDisplay" readonly style="background: #f7fafc;">
+            <label>End Date:</label>
+            <input type="text" id="endDateDisplay" readonly style="background: #f7fafc;">
+            <div class="modal-buttons">
+                <button onclick="saveFamilyHoliday()">Save Holiday</button>
+                <button onclick="closeModal()" class="secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const publicHolidays = {
+            '2026-01-01': "New Year's Day",
+            '2026-01-26': 'Australia Day',
+            '2026-03-09': 'Labour Day',
+            '2026-04-03': 'Good Friday',
+            '2026-04-04': 'Saturday before Easter Sunday',
+            '2026-04-06': 'Easter Monday',
+            '2026-04-25': 'Anzac Day',
+            '2026-06-08': "King's Birthday",
+            '2026-11-03': 'Melbourne Cup Day',
+            '2026-12-25': 'Christmas Day',
+            '2026-12-26': 'Boxing Day',
+            '2026-12-28': 'Boxing Day Holiday (substitute)'
+        };
+        
+        const schoolTerms = [
+            { start: '2026-01-28', end: '2026-04-02' },
+            { start: '2026-04-20', end: '2026-06-26' },
+            { start: '2026-07-13', end: '2026-09-18' },
+            { start: '2026-10-05', end: '2026-12-18' }
+        ];
+        
+        let familyHolidays = [];
+        let selectionStartDate = null;
+        let hoverDate = null;
+        
+        function loadFamilyHolidays() {
+            const saved = localStorage.getItem('familyHolidays2026');
+            if (saved) {
+                familyHolidays = JSON.parse(saved);
+            }
+        }
+        
+        function saveFamilyHolidaysToStorage() {
+            localStorage.setItem('familyHolidays2026', JSON.stringify(familyHolidays));
+        }
+        
+        function isWeekend(date) {
+            const day = date.getDay();
+            return day === 0 || day === 6;
+        }
+        
+        function isPublicHoliday(dateStr) {
+            return publicHolidays[dateStr];
+        }
+        
+        function isSchoolTerm(dateStr) {
+            for (let term of schoolTerms) {
+                if (dateStr >= term.start && dateStr <= term.end) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        function isFamilyHoliday(dateStr) {
+            for (let i = 0; i < familyHolidays.length; i++) {
+                const holiday = familyHolidays[i];
+                if (dateStr >= holiday.start && dateStr <= holiday.end) {
+                    return { index: i, label: holiday.label || 'Family Holiday' };
+                }
+            }
+            return false;
+        }
+        
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        function formatDateDisplay(dateStr) {
+            const [y, m, d] = dateStr.split('-');
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return `${d} ${months[parseInt(m) - 1]} ${y}`;
+        }
+        
+        function updateSelectionStatus() {
+            const status = document.getElementById('selectionStatus');
+            const cancelBtn = document.getElementById('cancelBtn');
+            
+            if (selectionStartDate) {
+                status.innerHTML = `<strong style="color: #38a169;">✓ Start: ${formatDateDisplay(selectionStartDate)} - Now select end date</strong>`;
+                cancelBtn.style.display = 'inline-block';
+            } else {
+                status.innerHTML = '';
+                cancelBtn.style.display = 'none';
+            }
+        }
+        
+        function cancelSelection() {
+            selectionStartDate = null;
+            hoverDate = null;
+            updateSelectionStatus();
+            renderCalendar();
+        }
+        
+        function handleDayClick(dateStr) {
+            console.log('Click detected on:', dateStr, 'Current start:', selectionStartDate);
+            
+            // If clicking on existing family holiday, edit it (only when not in selection mode)
+            const familyHol = isFamilyHoliday(dateStr);
+            if (familyHol && !selectionStartDate) {
+                console.log('Editing existing holiday');
+                editFamilyHoliday(familyHol.index);
+                return;
+            }
+            
+            // If no start date selected yet, this becomes the start (public holidays allowed)
+            if (!selectionStartDate) {
+                console.log('Setting start date');
+                selectionStartDate = dateStr;
+                hoverDate = dateStr;
+                console.log('Start date is now:', selectionStartDate);
+                updateSelectionStatus();
+                updateDayStyles();
+            } else {
+                // This is the end date, open modal
+                console.log('Setting end date and opening modal');
+                const start = selectionStartDate < dateStr ? selectionStartDate : dateStr;
+                const end = selectionStartDate < dateStr ? dateStr : selectionStartDate;
+                
+                console.log('Date range:', start, 'to', end);
+                
+                document.getElementById('startDateDisplay').value = formatDateDisplay(start);
+                document.getElementById('endDateDisplay').value = formatDateDisplay(end);
+                document.getElementById('startDateDisplay').dataset.date = start;
+                document.getElementById('endDateDisplay').dataset.date = end;
+                document.getElementById('modalTitle').textContent = 'Name Your Family Holiday';
+                document.getElementById('editingIndex').value = '';
+                document.getElementById('holidayLabel').value = '';
+                
+                // Show modal
+                const modal = document.getElementById('holidayModal');
+                modal.classList.add('active');
+                console.log('Modal should be visible now');
+                
+                // Focus on input after a brief delay to ensure modal is rendered
+                setTimeout(() => {
+                    document.getElementById('holidayLabel').focus();
+                }, 100);
+            }
+        }
+        
+        function handleDayHover(dateStr) {
+            if (!selectionStartDate) return;
+            hoverDate = dateStr;
+            updateDayStyles();
+        }
+        
+        function updateDayStyles() {
+            // Update styling without full re-render
+            const allDays = document.querySelectorAll('.day[data-date]');
+            
+            let previewStart = null;
+            let previewEnd = null;
+            if (selectionStartDate) {
+                if (hoverDate) {
+                    previewStart = selectionStartDate < hoverDate ? selectionStartDate : hoverDate;
+                    previewEnd = selectionStartDate < hoverDate ? hoverDate : selectionStartDate;
+                } else {
+                    previewStart = selectionStartDate;
+                    previewEnd = selectionStartDate;
+                }
+            }
+            
+            allDays.forEach(dayDiv => {
+                const dateStr = dayDiv.dataset.date;
+                
+                // Remove selection classes
+                dayDiv.classList.remove('selecting-start', 'selecting-preview');
+                
+                // Remove any existing tooltips from selection
+                const existingTooltip = dayDiv.querySelector('.tooltip');
+                if (existingTooltip && (existingTooltip.textContent.includes('Start date') || existingTooltip.textContent === 'Start date - click another date to finish')) {
+                    existingTooltip.remove();
+                }
+                
+                // Apply selection styling if needed
+                if (dateStr === selectionStartDate) {
+                    dayDiv.classList.add('selecting-start');
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'tooltip';
+                    tooltip.textContent = 'Start date - click another date to finish';
+                    dayDiv.appendChild(tooltip);
+                } else if (previewStart && previewEnd && dateStr > previewStart && dateStr <= previewEnd && !isFamilyHoliday(dateStr)) {
+                    dayDiv.classList.add('selecting-preview');
+                }
+            });
+        }
+        
+        function renderCalendar() {
+            const calendar = document.getElementById('calendar');
+            calendar.innerHTML = '';
+            
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+            const dayHeaders = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+            
+            const today = formatDate(new Date());
+            
+            // Calculate preview range if we're selecting
+            let previewStart = null;
+            let previewEnd = null;
+            if (selectionStartDate) {
+                if (hoverDate) {
+                    previewStart = selectionStartDate < hoverDate ? selectionStartDate : hoverDate;
+                    previewEnd = selectionStartDate < hoverDate ? hoverDate : selectionStartDate;
+                } else {
+                    // If no hover yet, just show the start date
+                    previewStart = selectionStartDate;
+                    previewEnd = selectionStartDate;
+                }
+            }
+            
+            for (let month = 0; month < 12; month++) {
+                const monthDiv = document.createElement('div');
+                monthDiv.className = 'month';
+                
+                const monthName = document.createElement('div');
+                monthName.className = 'month-name';
+                monthName.textContent = months[month];
+                monthDiv.appendChild(monthName);
+                
+                const daysGrid = document.createElement('div');
+                daysGrid.className = 'days-grid';
+                
+                dayHeaders.forEach(day => {
+                    const header = document.createElement('div');
+                    header.className = 'day-header';
+                    header.textContent = day;
+                    daysGrid.appendChild(header);
+                });
+                
+                const firstDay = new Date(2026, month, 1);
+                const lastDay = new Date(2026, month + 1, 0);
+                const startDay = firstDay.getDay();
+                
+                for (let i = 0; i < startDay; i++) {
+                    const empty = document.createElement('div');
+                    empty.className = 'day empty';
+                    daysGrid.appendChild(empty);
+                }
+                
+                for (let day = 1; day <= lastDay.getDate(); day++) {
+                    const date = new Date(2026, month, day);
+                    const year = date.getFullYear();
+                    const m = String(date.getMonth() + 1).padStart(2, '0');
+                    const d = String(date.getDate()).padStart(2, '0');
+                    const dateStr = `${year}-${m}-${d}`;
+                    
+                    const dayDiv = document.createElement('div');
+                    dayDiv.className = 'day';
+                    dayDiv.textContent = day;
+                    dayDiv.dataset.date = dateStr;
+                    
+                    if (dateStr === today) {
+                        dayDiv.classList.add('today');
+                    }
+                    
+                    const pubHol = isPublicHoliday(dateStr);
+                    const familyHol = isFamilyHoliday(dateStr);
+                    
+                    // Always apply base styling first
+                    if (familyHol) {
+                        dayDiv.classList.add('family-holiday');
+                        // If it's also a public holiday, add that class too to get red text
+                        if (pubHol) {
+                            dayDiv.classList.add('public-holiday');
+                        }
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'tooltip';
+                        tooltip.textContent = familyHol.label + (pubHol ? ` (includes ${pubHol})` : '') + ' (click to edit)';
+                        dayDiv.appendChild(tooltip);
+                    } else if (pubHol) {
+                        dayDiv.classList.add('public-holiday');
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'tooltip';
+                        tooltip.textContent = pubHol;
+                        dayDiv.appendChild(tooltip);
+                    } else if (isSchoolTerm(dateStr)) {
+                        dayDiv.classList.add('school-term');
+                    } else if (isWeekend(date)) {
+                        dayDiv.classList.add('weekend');
+                    } else {
+                        dayDiv.classList.add('school-holiday');
+                    }
+                    
+                    // Then overlay selection styling if applicable
+                    if (dateStr === selectionStartDate) {
+                        dayDiv.classList.remove('school-term', 'school-holiday', 'weekend');
+                        dayDiv.classList.add('selecting-start');
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'tooltip';
+                        tooltip.textContent = 'Start date - click another date to finish';
+                        dayDiv.appendChild(tooltip);
+                    } else if (previewStart && previewEnd && dateStr > previewStart && dateStr <= previewEnd && !isPublicHoliday(dateStr) && !familyHol) {
+                        dayDiv.classList.remove('school-term', 'school-holiday', 'weekend');
+                        dayDiv.classList.add('selecting-preview');
+                    }
+                    
+                    dayDiv.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleDayClick(dateStr);
+                    });
+                    dayDiv.addEventListener('mouseenter', () => handleDayHover(dateStr));
+                    
+                    // Add touch support for mobile
+                    dayDiv.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        handleDayHover(dateStr);
+                    }, { passive: false });
+                    
+                    dayDiv.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        handleDayClick(dateStr);
+                    }, { passive: false });
+                    
+                    daysGrid.appendChild(dayDiv);
+                }
+                
+                monthDiv.appendChild(daysGrid);
+                calendar.appendChild(monthDiv);
+            }
+            
+            renderHolidayList();
+        }
+        
+        function editFamilyHoliday(index) {
+            const holiday = familyHolidays[index];
+            document.getElementById('modalTitle').textContent = 'Edit Family Holiday';
+            document.getElementById('editingIndex').value = index;
+            document.getElementById('startDateDisplay').value = formatDateDisplay(holiday.start);
+            document.getElementById('endDateDisplay').value = formatDateDisplay(holiday.end);
+            document.getElementById('startDateDisplay').dataset.date = holiday.start;
+            document.getElementById('endDateDisplay').dataset.date = holiday.end;
+            document.getElementById('holidayLabel').value = holiday.label || '';
+            document.getElementById('holidayModal').classList.add('active');
+            
+            // Add delete button for editing
+            const modalButtons = document.querySelector('.modal-buttons');
+            const existingDelete = document.getElementById('deleteBtn');
+            if (!existingDelete) {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.id = 'deleteBtn';
+                deleteBtn.className = 'cancel';
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.onclick = () => {
+                    removeFamilyHoliday(index);
+                    closeModal();
+                };
+                modalButtons.insertBefore(deleteBtn, modalButtons.firstChild);
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('holidayModal').classList.remove('active');
+            const deleteBtn = document.getElementById('deleteBtn');
+            if (deleteBtn) deleteBtn.remove();
+            
+            selectionStartDate = null;
+            hoverDate = null;
+            updateSelectionStatus();
+            renderCalendar();
+        }
+        
+        function saveFamilyHoliday() {
+            const start = document.getElementById('startDateDisplay').dataset.date;
+            const end = document.getElementById('endDateDisplay').dataset.date;
+            const label = document.getElementById('holidayLabel').value;
+            const editingIndex = document.getElementById('editingIndex').value;
+            
+            if (!start || !end) {
+                alert('Please select start and end dates');
+                return;
+            }
+            
+            if (editingIndex === '') {
+                familyHolidays.push({ start, end, label });
+            } else {
+                familyHolidays[parseInt(editingIndex)] = { start, end, label };
+            }
+            
+            saveFamilyHolidaysToStorage();
+            closeModal();
+        }
+        
+        function removeFamilyHoliday(index) {
+            if (confirm('Delete this family holiday?')) {
+                familyHolidays.splice(index, 1);
+                saveFamilyHolidaysToStorage();
+                renderCalendar();
+            }
+        }
+        
+        function clearFamilyHolidays() {
+            if (confirm('Clear all family holidays?')) {
+                familyHolidays = [];
+                saveFamilyHolidaysToStorage();
+                selectionStartDate = null;
+                hoverDate = null;
+                updateSelectionStatus();
+                renderCalendar();
+            }
+        }
+        
+        function toggleHolidayList() {
+            const list = document.getElementById('holidayList');
+            list.style.display = list.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function renderHolidayList() {
+            const container = document.getElementById('holidayItems');
+            
+            if (familyHolidays.length === 0) {
+                container.innerHTML = '<p style="color: #718096; text-align: center;">No family holidays yet. Click a start date, then click an end date to add one!</p>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            familyHolidays.forEach((holiday, index) => {
+                const item = document.createElement('div');
+                item.className = 'holiday-item';
+                
+                const info = document.createElement('div');
+                info.className = 'holiday-info';
+                
+                const name = document.createElement('div');
+                name.className = 'holiday-name';
+                name.textContent = holiday.label || 'Family Holiday';
+                
+                const dates = document.createElement('div');
+                dates.className = 'holiday-dates';
+                dates.textContent = `${formatDateDisplay(holiday.start)} - ${formatDateDisplay(holiday.end)}`;
+                
+                info.appendChild(name);
+                info.appendChild(dates);
+                
+                const actions = document.createElement('div');
+                actions.className = 'holiday-actions';
+                
+                const editBtn = document.createElement('button');
+                editBtn.textContent = 'Edit';
+                editBtn.onclick = () => editFamilyHoliday(index);
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.className = 'secondary';
+                deleteBtn.onclick = () => removeFamilyHoliday(index);
+                
+                actions.appendChild(editBtn);
+                actions.appendChild(deleteBtn);
+                
+                item.appendChild(info);
+                item.appendChild(actions);
+                container.appendChild(item);
+            });
+        }
+        
+        loadFamilyHolidays();
+        renderCalendar();
+    </script>
+</body>
+</html>
